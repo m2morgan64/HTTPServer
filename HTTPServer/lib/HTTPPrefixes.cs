@@ -7,26 +7,26 @@ using static TCPServer.lib.EventHelpers;
 
 namespace TCPServer.lib
 {
-    public class HTTPPrefixes<T> : List<T>
+    public class HTTPPrefixes<String> : List<String>
     {
         public event EventHandler<SingleStringEventArgs> OnAdd;
         public event EventHandler<MultiStringEventArgs> OnAddRange;
         public event EventHandler<SingleStringEventArgs> OnRemove;
         public event EventHandler<MultiStringEventArgs> OnRemoveRange;
         
-        public new void Add(T item)
+        public new void Add(String item)
         {
             RaiseSingleStringEvent(this, OnAdd, item as string);
             base.Add(item);
         }
 
-        public new void AddRange(IEnumerable<T> items)
+        public new void AddRange(IEnumerable<String> items)
         {
             RaiseMultiStringEvent(this, OnAddRange, items as List<string>);
             base.AddRange(items);
         }
 
-        public new void Remove(T item)
+        public new void Remove(String item)
         {
             RaiseSingleStringEvent(this, OnRemove, item as string);
             base.Remove(item);
@@ -34,7 +34,7 @@ namespace TCPServer.lib
 
         public new void RemoveRange(Int32 index, Int32 count)
         {
-            RaiseSingleStringEvent(this, OnRemove, item as string);
+            RaiseMultiStringEvent(this, OnRemoveRange, this.GetRange(index, count) as List<string>);
             base.RemoveRange(index, count);
         }
     }

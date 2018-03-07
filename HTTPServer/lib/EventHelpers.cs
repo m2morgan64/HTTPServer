@@ -8,6 +8,14 @@ namespace TCPServer.lib
 {
     public static class EventHelpers
     {
+        public static void RaiseSimpleEvent(object obj, EventHandler<EventArgs> evt)
+        {
+            if (evt != null)
+            {
+                evt(obj, new EventArgs());
+            }
+        }
+
         public static void RaiseSingleStringEvent(object obj, EventHandler<SingleStringEventArgs> evt, string val)
         {
             if (evt != null)
