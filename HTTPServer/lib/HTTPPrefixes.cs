@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static TCPServer.lib.EventHelpers;
+using static HTTPServer.lib.Utils.EventHelpers;
 
-namespace TCPServer.lib
+namespace HTTPServer.lib
 {
     public class HTTPPrefixes<String> : List<String>
     {
