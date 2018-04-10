@@ -76,5 +76,52 @@ namespace HTTPServer.Properties {
                 return ResourceManager.GetString("ErrorResponseContentTemplate", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; ?&gt;
+        ///&lt;!DOCTYPE svg  PUBLIC &apos;-//W3C//DTD SVG 1.1//EN&apos;  &apos;http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd&apos;&gt;
+        ///&lt;svg enable-background=&quot;new 0 0 32 32&quot; height=&quot;32px&quot; id=&quot;Layer_1&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 32 32&quot; width=&quot;32px&quot; xml:space=&quot;preserve&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot;&gt;
+        ///	&lt;circle cx=&quot;16&quot; cy=&quot;16&quot; fill=&quot;#7ae64e&quot; r=&quot;16&quot;/&gt;
+        ///	&lt;g&gt;
+        ///		&lt;path d=&quot;M 6 16 L 12 24 L 25 8&quot; stroke=&quot;#696969&quot; stroke-width=&quot;3&quot; fill=&quot;transparent&quot;/&gt;
+        ///	&lt;/g&gt;
+        ///&lt;/svg&gt;.
+        /// </summary>
+        internal static string green_check {
+            get {
+                return ResourceManager.GetString("green_check", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;?xml version=&quot;1.0&quot; ?&gt;
+        ///&lt;!DOCTYPE svg  PUBLIC &apos;-//W3C//DTD SVG 1.1//EN&apos;  &apos;http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd&apos;&gt;
+        ///&lt;svg enable-background=&quot;new 0 0 32 32&quot; height=&quot;32px&quot; id=&quot;Layer_1&quot; version=&quot;1.1&quot; viewBox=&quot;0 0 32 32&quot; width=&quot;32px&quot; xml:space=&quot;preserve&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot; xmlns:xlink=&quot;http://www.w3.org/1999/xlink&quot;&gt;
+        ///	&lt;circle cx=&quot;16&quot; cy=&quot;16&quot; fill=&quot;#FF6969&quot; r=&quot;16&quot;/&gt;
+        ///	&lt;g&gt;
+        ///		&lt;path d=&quot;M 7 7 L 25 25&quot; stroke=&quot;#696969&quot; stroke-width=&quot;3&quot; fill=&quot;transparent&quot;/&gt;
+        ///		&lt;path d=&quot;M 25 7 L 7 25&quot; stroke=&quot; [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string red_x {
+            get {
+                return ResourceManager.GetString("red_x", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to &lt;HTML&gt;
+        ///&lt;Head&gt;
+        ///&lt;Title&gt;Volume Controller&lt;/Title&gt;
+        ///&lt;/Head&gt;
+        ///&lt;Body&gt;
+        ///There will eventually be a UI here...
+        ///&lt;/Body&gt;
+        ///&lt;/HTML&gt;.
+        /// </summary>
+        internal static string VolumeControllerHTML {
+            get {
+                return ResourceManager.GetString("VolumeControllerHTML", resourceCulture);
+            }
+        }
     }
 }

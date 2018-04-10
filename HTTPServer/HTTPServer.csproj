@@ -58,10 +58,10 @@
     <Compile Include="lib\HTTPPrefixes.cs" />
     <Compile Include="lib\ResolvedHttpListenerRequest.cs" />
     <Compile Include="lib\ResponseInfo.cs" />
-    <Compile Include="lib\Utils\MethodUtils.cs" />
+    <Compile Include="lib\Utils\PageBuilder.cs" />
     <Compile Include="lib\Utils\StringUtils.cs" />
-    <Compile Include="API\RequestHandler.cs" />
-    <Compile Include="API\VolumeController\RequestHandler.cs" />
+    <Compile Include="api\API.cs" />
+    <Compile Include="api\VolumeController\VolumeController.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -92,9 +92,17 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\green-check.svg" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\ErrorResponseContentTemplate.html" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\red-x.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\VolumeControllerHTML.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -35,6 +35,9 @@
     <ApplicationIcon>EyeInHRBlue.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\packages\NLog.4.4.13\lib\net45\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -56,6 +59,7 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Settings.cs" />
     <EmbeddedResource Include="frmVisualizer.resx">
       <DependentUpon>frmVisualizer.cs</DependentUpon>
     </EmbeddedResource>
@@ -67,7 +71,9 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -83,6 +89,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="EyeInHRBlue.ico" />
+    <EmbeddedResource Include="Resources\Dot_Green.png" />
+    <EmbeddedResource Include="Resources\Dot_Red.png" />
+    <EmbeddedResource Include="Resources\Dot_Grey.png" />
+    <EmbeddedResource Include="Resources\Dot_Yellow.png" />
+    <EmbeddedResource Include="Resources\Dot_Blue.png" />
+    <EmbeddedResource Include="Resources\Dot_Purple.png" />
+    <EmbeddedResource Include="Resources\Stop.png" />
+    <EmbeddedResource Include="Resources\Play.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\HTTPServer\HTTPServer.csproj">

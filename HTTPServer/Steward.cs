@@ -10,6 +10,7 @@ using System.Threading;
 using static HTTPServer.lib.Utils.EventHelpers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace HTTPServer
 {
@@ -19,11 +20,23 @@ namespace HTTPServer
     {
         #region public Enums/Constants
         public enum RunStatus { Stopped, Starting, Running, Stopping };
+        public const string HANDLERNAME = "Handle";
         public const string LogTarget = "logfile";
         #endregion
 
         #region Classes
-
+        public class APIMethodAttributes : Attribute
+        {
+            public bool GetSupported { get; set; }
+            public bool PostSupported { get; set; }
+            public bool PutSupported { get; set; }
+            public bool DeleteSupported { get; set; }
+            public string Description { get; set; }
+        }
+        public class WebPagesAttributes : Attribute
+        {
+            public bool IsWebPage { get { return true; } }
+        }
         #endregion
 
         #region Events
@@ -165,29 +178,14 @@ namespace HTTPServer
             
             while (listener.IsListening)
             {
-                IAsyncResult result = listener.BeginGetContext(Handle, listener);
+                IAsyncResult result = listener.BeginGetContext(Listen, listener);
                 result.AsyncWaitHandle.WaitOne();
             }
             listener.Close();
             this.Status = RunStatus.Stopped;
-            //// Note: The GetContext method blocks while waiting for a request. 
-            //HttpListenerContext context = _listener.GetContext();
-            //HttpListenerRequest request = context.Request;
-            //// Obtain a response object.
-            //HttpListenerResponse response = context.Response;
-            //// Construct a response.
-            //string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
-            //byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-            //// Get a response stream and write the response to it.
-            //response.ContentLength64 = buffer.Length;
-            //System.IO.Stream output = response.OutputStream;
-            //output.Write(buffer, 0, buffer.Length);
-            //// You must close the output stream.
-            //output.Close();
-            //_listener.Stop();
         }
         
-        private void Handle(IAsyncResult result)
+        private void Listen(IAsyncResult result)
         {
             HttpListener listener = (HttpListener)result.AsyncState;
             if (listener.IsListening)
@@ -198,7 +196,7 @@ namespace HTTPServer
                 LogIncomingRequest(req.Request, req.Content);
 
                 // Obtain a response object.
-                ResponseInfo responseContent = RouteRequest(req);
+                ResponseInfo responseContent = Handle(req);
 
                 // Respond
                 HttpListenerResponse response = context.Response;
@@ -291,7 +289,7 @@ namespace HTTPServer
             logger.Debug("######################################################################");
         }
 
-        private ResponseInfo RouteRequest(ResolvedHttpListenerRequest request)
+        private ResponseInfo Handle(ResolvedHttpListenerRequest request)
         {
             ResponseInfo result = new ResponseInfo(HttpStatusCode.NotFound, _StandardErrorResponseContent);
 
@@ -300,26 +298,27 @@ namespace HTTPServer
                 return result;
             }
 
-            string methodName = request.Request.Url.Segments[1].Replace("/", string.Empty).ToUpper();
-            
-            switch (methodName)
+            string pathElement = request.Request.Url.Segments[1].Replace("/", string.Empty);
+            string nameSpaceName = string.Format("{0}.{1}", GetType().Namespace, pathElement);
+
+            System.Type nameSpace = (from type in Assembly.GetExecutingAssembly().GetTypes()
+                                     where type.Namespace == nameSpaceName
+                                     select type).FirstOrDefault<Type>();
+
+            if (nameSpace != null)
             {
-                case "API":
-                    result = API.RequestHandler.Handle(request);
-                    break;
+                MethodInfo subElementHandler = nameSpace.GetMethod(HANDLERNAME);
+                result = (ResponseInfo)subElementHandler.Invoke(this, new object[] { request });
             }
-
-            //string[] strParams = request.Request.Url.Segments.Skip(2).Select(s => s.Replace("/", string.Empty)).ToArray();
-
-            //System.Reflection.MethodInfo method = this.GetType().GetMethod(methodName);
-
-            //object[] @params = method.GetParameters().Select((p, i) => Convert.ChangeType(strParams[i], p.ParameterType)).ToArray();
-
-            //ResponseInfo ret = (ResponseInfo)method.Invoke(this, @params);
+            else
+            {
+                // See if we have a method to call
+                throw new InvalidOperationException("Valid type not found.");
+            }
 
             return result;
         }
-
+        
         private void RunServerCallback(IAsyncResult ar)
         {
             try

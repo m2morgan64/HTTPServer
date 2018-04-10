@@ -1,2 +1,5 @@
 Visualizer/obj/
 Visualizer/bin/
+.vs/
+.vs/*
+/packages/
