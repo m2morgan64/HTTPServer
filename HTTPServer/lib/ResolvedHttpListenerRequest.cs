@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net;
+﻿using System.Net;
 using System.IO;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace HTTPServer.lib
@@ -18,33 +12,31 @@ namespace HTTPServer.lib
         
         public object ContentObj { get; protected set; }
 
-        public ResolvedHttpListenerRequest(HttpListenerRequest req) : base()
+        public ResolvedHttpListenerRequest(HttpListenerRequest req)
         {
-            this.Request = req;
-            this.ContentType = req.ContentType;
+            Request = req;
+            ContentType = req.ContentType;
             if (req.HasEntityBody)
             {
                 Stream body = req.InputStream;
-                StreamReader reader = new System.IO.StreamReader(body, req.ContentEncoding);
-                this.Content = reader.ReadToEnd();
+                StreamReader reader = new StreamReader(body, req.ContentEncoding);
+                Content = reader.ReadToEnd();
             }
             else
             {
-                this.Content = "N/A";
+                Content = "N/A";
             }
 
-            switch (this.ContentType)
+            switch (ContentType)
             {
                 case "application/json":
-                    this.ContentObj = Newtonsoft.Json.JsonConvert.DeserializeObject(this.Content);
-                    this.Content = Utils.StringUtils.PrettyJson(this.ContentObj);
+                    ContentObj = Newtonsoft.Json.JsonConvert.DeserializeObject(Content);
+                    Content = Utils.StringUtils.PrettyJson(ContentObj);
                     break;
                 case "text/xml":
                 case "application/xml":
-                    this.ContentObj = XDocument.Parse(this.Content);
-                    this.Content = Utils.StringUtils.PrettyXml((XDocument)this.ContentObj);
-                    break;
-                default:
+                    ContentObj = XDocument.Parse(Content);
+                    Content = Utils.StringUtils.PrettyXml((XDocument)ContentObj);
                     break;
             }
         }

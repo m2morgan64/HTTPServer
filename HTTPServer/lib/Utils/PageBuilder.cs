@@ -3,75 +3,82 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace HTTPServer.lib.Utils
 {
     public static class PageBuilder
     {
-        private static string greenCheck = HTTPServer.Properties.Resources.green_check;
-        private static string redX = HTTPServer.Properties.Resources.red_x;
+        private static readonly string GreenCheck = Properties.Resources.green_check;
+        private static readonly string RedX = Properties.Resources.red_x;
 
-        public static string MethodListInAPI(Type type)
+        public static string MethodListInApi(Type type)
         {
             StringBuilder result = new StringBuilder();
 
             result.AppendLine("<HTML>");
             result.AppendLine("<Head>");
-            result.AppendLine($"<Title>{string.Join(".", type.Namespace.Split('.').Skip(1))}</Title>");
-            result.AppendLine("<style>");
-            result.AppendLine("body { background-color: powderblue; }");
-            result.AppendLine("table { border-collapse: collapse; margin-left:50px;}");
-            result.AppendLine("table, th, td { border: 1px solid #1c5191; }");
-            result.AppendLine("h2 { text-decoration: underline double blue; font-size: 28px; font-weight: bold; }");
-            result.AppendLine("tr:nth-child(even) {background: #739dd2}");
-            result.AppendLine("tr:nth-child(odd) {background: #8abdfc}");
-            result.AppendLine("th { text-align:left; padding:3px; background-color: #e6e6e6; font-size: 22px; font-weight: bold; }");
-            result.AppendLine("th.NameColumn {min-width:250px;}");
-            result.AppendLine("th.DescriptionColumn {min-width:250px; max-width:500px}");
-            result.AppendLine("th.boolColumn {width:48px; text-align:center; }");
-            result.AppendLine("td {  font-size: 18px; font-weight: bold; }");
-            result.AppendLine("td.boolColumn { text-align:center; }");
-            result.AppendLine("td.descriptionCell { font-weight: normal; padding-right: 5px}");
-            result.AppendLine("</style>");
-            result.AppendLine("</Head>");
-            result.AppendLine("<Body>");
-
-            // Make an "up one level" link
-            result.Append(@"<a href=""../"">").Append("Up One Level").AppendLine("</a>");
-
-            IEnumerable<Type> nameSpaces = Assembly.GetExecutingAssembly().GetTypes()
-              .Where(t => t.Namespace.StartsWith(type.Namespace, StringComparison.Ordinal)
-                    && t.GetMethod(Steward.HANDLERNAME) != null);
-
-            // There will always be at least one because the passed-in type will be present
-            if (nameSpaces.Count() > 1)
+            if (type.Namespace != null)
             {
-                result.AppendLine(@"<div id=""SubModules"">");
-                result.AppendLine(@"<h2>Sub-Modules:</h2>");
-                result.AppendLine(@"<ul class=""SubModulesList"">");
+                result.AppendLine($"<Title>{string.Join(".", type.Namespace.Split('.').Skip(1))}</Title>");
+                result.AppendLine("<style>");
+                result.AppendLine("body { background-color: powderblue; }");
+                result.AppendLine("table { border-collapse: collapse; margin-left:50px;}");
+                result.AppendLine("table, th, td { border: 1px solid #1c5191; }");
+                result.AppendLine("h2 { text-decoration: underline double blue; font-size: 28px; font-weight: bold; }");
+                result.AppendLine("tr:nth-child(even) {background: #739dd2}");
+                result.AppendLine("tr:nth-child(odd) {background: #8abdfc}");
+                result.AppendLine(
+                    "th { text-align:left; padding:3px; background-color: #e6e6e6; font-size: 22px; font-weight: bold; }");
+                result.AppendLine("th.NameColumn {min-width:250px;}");
+                result.AppendLine("th.DescriptionColumn {min-width:250px; max-width:500px}");
+                result.AppendLine("th.boolColumn {width:48px; text-align:center; }");
+                result.AppendLine("td {  font-size: 18px; font-weight: bold; }");
+                result.AppendLine("td.boolColumn { text-align:center; }");
+                result.AppendLine("td.descriptionCell { font-weight: normal; padding-right: 5px}");
+                result.AppendLine("</style>");
+                result.AppendLine("</Head>");
+                result.AppendLine("<Body>");
 
+                // Make an "up one level" link
+                result.Append(@"<a href=""../"">").Append("Up One Level").AppendLine("</a>");
 
-                foreach (Type nameSpace in nameSpaces)
+                List<Type> nameSpaces = Assembly.GetExecutingAssembly().GetTypes()
+                    .Where(t => t.Namespace != null
+                                && t.Namespace.StartsWith(type.Namespace, StringComparison.Ordinal)
+                                && t.GetMethod(Steward.HANDLERNAME) != null).ToList();
+
+                // There will always be at least one because the passed-in type will be present
+                if (nameSpaces.Count > 1)
                 {
-                    string nm = nameSpace.Namespace.Replace(type.Namespace, string.Empty);
-                    if (nm.StartsWith("."))
+                    result.AppendLine(@"<div id=""SubModules"">");
+                    result.AppendLine(@"<h2>Sub-Modules:</h2>");
+                    result.AppendLine(@"<ul class=""SubModulesList"">");
+
+
+                    foreach (Type nameSpace in nameSpaces)
                     {
-                        nm = nm.Substring(1, nm.Length - 1);
+                        if (nameSpace.Namespace != null)
+                        {
+                            string nm = nameSpace.Namespace.Replace(type.Namespace, string.Empty);
+                            if (nm.StartsWith("."))
+                            {
+                                nm = nm.Substring(1, nm.Length - 1);
+                            }
+
+                            if (nm != string.Empty)
+                            {
+                                result.AppendLine($"<li><a href=\"./{nm}/\">{nm}</a></li>");
+                            }
+                        }
                     }
 
-                    if (nm != string.Empty)
-                    {
-                        result.AppendLine($"<li><a href=\"./{nm}/\">{nm}</a></li>");
-                    }
+                    result.AppendLine("</ul>");
                 }
-
-                result.AppendLine("</ul>");
             }
 
             // Make a Pages List
-            IEnumerable<MethodInfo> pages = type.GetMethods().Where(m => m.GetCustomAttribute(typeof(Steward.WebPagesAttributes)) != null);
-            if (pages.Count() > 0)
+            List<MethodInfo> pages = type.GetMethods().Where(m => m.GetCustomAttribute(typeof(Steward.WebPagesAttributes)) != null).ToList();
+            if (pages.Any())
             {
                 result.AppendLine(@"<div id=""Pages"">");
                 result.AppendLine(@"<h2>Pages:</h2>");
@@ -87,8 +94,8 @@ namespace HTTPServer.lib.Utils
             }
             
             // Methods Table
-            IEnumerable<MethodInfo> methods = type.GetMethods().Where(m => m.GetCustomAttribute(typeof(Steward.APIMethodAttributes)) != null);
-            if (methods.Count() > 0)
+            List<MethodInfo> methods = type.GetMethods().Where(m => m.GetCustomAttribute(typeof(Steward.ApiMethodAttributes)) != null).ToList();
+            if (methods.Any())
             {
                 result.AppendLine(@"<div id=""Methods"">");
                 result.AppendLine(@"<h2>Methods:</h2>");
@@ -104,14 +111,14 @@ namespace HTTPServer.lib.Utils
 
                 foreach (MethodInfo method in methods)
                 {
-                    Steward.APIMethodAttributes attr = (Steward.APIMethodAttributes)method.GetCustomAttribute(typeof(Steward.APIMethodAttributes));
+                    Steward.ApiMethodAttributes attr = (Steward.ApiMethodAttributes)method.GetCustomAttribute(typeof(Steward.ApiMethodAttributes));
                     result.AppendLine("<tr>");
                     result.AppendLine($"<td>{method.Name}</th>");
                     result.AppendLine($"<td class=\"descriptionCell\">{attr.Description}</th>");
-                    result.Append(@"<td class=""boolColumn"">").Append((attr.GetSupported) ? greenCheck : redX).AppendLine("</th>");
-                    result.Append(@"<td class=""boolColumn"">").Append((attr.PostSupported) ? greenCheck : redX).AppendLine("</th>");
-                    result.Append(@"<td class=""boolColumn"">").Append((attr.PutSupported) ? greenCheck : redX).AppendLine("</th>");
-                    result.Append(@"<td class=""boolColumn"">").Append((attr.DeleteSupported) ? greenCheck : redX).AppendLine("</th>");
+                    result.Append(@"<td class=""boolColumn"">").Append((attr.GetSupported) ? GreenCheck : RedX).AppendLine("</th>");
+                    result.Append(@"<td class=""boolColumn"">").Append((attr.PostSupported) ? GreenCheck : RedX).AppendLine("</th>");
+                    result.Append(@"<td class=""boolColumn"">").Append((attr.PutSupported) ? GreenCheck : RedX).AppendLine("</th>");
+                    result.Append(@"<td class=""boolColumn"">").Append((attr.DeleteSupported) ? GreenCheck : RedX).AppendLine("</th>");
                     result.AppendLine("</tr>");
                 }
                 result.AppendLine("</table>");

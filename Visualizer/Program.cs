@@ -1,22 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Visualizer
 {
+    // ReSharper disable once ArrangeTypeModifiers
     static class Program
     {
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
+        // ReSharper disable once ArrangeTypeMemberModifiers
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new frmVisualizer());
+            Application.Run(new FrmVisualizer());
         }
     }
 }

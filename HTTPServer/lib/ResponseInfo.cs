@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Net;
 
 namespace HTTPServer.lib
@@ -15,10 +11,10 @@ namespace HTTPServer.lib
 
         private void _ResponseInfo(HttpStatusCode statusCode, string reason, string content)
         {
-            this.StatusCode = statusCode;
-            this.ReasonPhrase = reason;
-            this.Content = content;
-            this.Content = this.Content.Replace("%CODE%", ((int)this.StatusCode).ToString()).Replace("%REASON%", this.ReasonPhrase);
+            StatusCode = statusCode;
+            ReasonPhrase = reason;
+            Content = content;
+            Content = Content.Replace("%CODE%", ((int)StatusCode).ToString()).Replace("%REASON%", ReasonPhrase);
         }
 
         public ResponseInfo(HttpStatusCode statusCode, string reason, string content)
@@ -34,7 +30,7 @@ namespace HTTPServer.lib
 
         public virtual object Clone()
         {
-            return new ResponseInfo(this.StatusCode, this.ReasonPhrase, this.Content);
+            return new ResponseInfo(StatusCode, ReasonPhrase, Content);
         }
     }
 }

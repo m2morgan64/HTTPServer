@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -35,6 +32,7 @@ namespace HTTPServer.lib.Utils
             return newText.ToString();
         }
         
+        [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public static string PrettyXml(string xml)
         {
             return PrettyXml(XDocument.Parse(xml));
@@ -44,10 +42,12 @@ namespace HTTPServer.lib.Utils
         {
             StringBuilder result = new StringBuilder();
 
-            XmlWriterSettings settings = new XmlWriterSettings();
-            settings.OmitXmlDeclaration = false;
-            settings.Indent = true;
-            settings.NewLineOnAttributes = true;
+            XmlWriterSettings settings = new XmlWriterSettings
+            {
+                OmitXmlDeclaration = false,
+                Indent = true,
+                NewLineOnAttributes = true
+            };
 
             using (var xmlWriter = XmlWriter.Create(result, settings))
             {
@@ -57,6 +57,7 @@ namespace HTTPServer.lib.Utils
             return result.ToString();
         }
 
+        [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public static string PrettyJson(string json)
         {
             return PrettyJson(Newtonsoft.Json.JsonConvert.DeserializeObject(json));

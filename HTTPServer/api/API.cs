@@ -6,9 +6,10 @@ using System.Reflection;
 
 namespace HTTPServer.api
 {
-    public static class API
+    public static class Api
     {
         #region Handler
+        // ReSharper disable once UnusedMember.Global
         public static ResponseInfo Handle(ResolvedHttpListenerRequest request)
         {
             ResponseInfo result = new ResponseInfo(HttpStatusCode.NotFound, Steward.StandardErrorResponseContent);
@@ -29,25 +30,31 @@ namespace HTTPServer.api
 
             if (pathElement == string.Empty)
             {
-                return new ResponseInfo(HttpStatusCode.OK, lib.Utils.PageBuilder.MethodListInAPI(typeof(API)));
+                return new ResponseInfo(HttpStatusCode.OK, lib.Utils.PageBuilder.MethodListInApi(typeof(Api)));
             }
 
-            string nameSpaceName = string.Format("{0}.{1}", typeof(API).Namespace, pathElement);
+            string nameSpaceName = $"{typeof(Api).Namespace}.{pathElement}";
 
-            System.Type nameSpace = (from type in Assembly.GetExecutingAssembly().GetTypes()
+            Type nameSpace = (from type in Assembly.GetExecutingAssembly().GetTypes()
                                      where type.Namespace == nameSpaceName
-                                     select type).FirstOrDefault<Type>();
+                                     select type).FirstOrDefault();
 
             if (nameSpace != null)
             {
                 MethodInfo subElementHandler = nameSpace.GetMethod(Steward.HANDLERNAME);
-                result = (ResponseInfo)subElementHandler.Invoke(typeof(API), new object[] { request });
+                if (subElementHandler != null)
+                {
+                    result = (ResponseInfo)subElementHandler.Invoke(typeof(Api), new object[] {request});
+                }
             }
             else
             {
                 // See if we have a method to call
-                MethodInfo method = typeof(API).GetMethod(pathElement);
-                result = (ResponseInfo)method.Invoke(typeof(API), new object[] { request });
+                MethodInfo method = typeof(Api).GetMethod(pathElement);
+                if (method != null)
+                {
+                    result = (ResponseInfo)method.Invoke(typeof(Api), new object[] { request });
+                }
             }
 
             return result;
@@ -55,21 +62,6 @@ namespace HTTPServer.api
         #endregion
 
         #region Public API Methods
-        [Steward.APIMethodAttributes(GetSupported = true, PutSupported = false, PostSupported = false, DeleteSupported = true)]
-        public static ResponseInfo Test(ResolvedHttpListenerRequest request)
-        {
-            ResponseInfo result = new ResponseInfo(HttpStatusCode.OK, "42");
-
-            return result;
-        }
-
-        [Steward.APIMethodAttributes(GetSupported = true, PutSupported = false, PostSupported = true, DeleteSupported = false)]
-        public static ResponseInfo Test2(ResolvedHttpListenerRequest request)
-        {
-            ResponseInfo result = new ResponseInfo(HttpStatusCode.OK, "64");
-
-            return result;
-        }
         #endregion
 
         #region Helpers

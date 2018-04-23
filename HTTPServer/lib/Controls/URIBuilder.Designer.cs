@@ -1,6 +1,6 @@
-﻿namespace TCPServer.lib.Controls
+﻿namespace HTTPServer.lib.Controls
 {
-    partial class URIBuilder
+    partial class UriBuilder
     {
         /// <summary> 
         /// Required designer variable.
@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(URIBuilder));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(UriBuilder));
             this.cboScheme = new System.Windows.Forms.ComboBox();
             this.lblSchemaDivider = new System.Windows.Forms.Label();
             this.txtHost = new System.Windows.Forms.TextBox();
@@ -163,7 +163,7 @@
             this.Controls.Add(this.lblSchemaDivider);
             this.Controls.Add(this.lblHostDivider);
             this.Controls.Add(this.lblPortDivider);
-            this.Name = "URIBuilder";
+            this.Name = "UriBuilder";
             this.Size = new System.Drawing.Size(863, 38);
             this.Load += new System.EventHandler(this.URIBuilder_Load);
             ((System.ComponentModel.ISupportInitialize)(this.nudPort)).EndInit();

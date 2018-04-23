@@ -1,14 +1,12 @@
 ﻿using System;
 using System.IO;
-using System.Collections;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using NLog;
 using HTTPServer.lib;
 using System.Threading;
 using static HTTPServer.lib.Utils.EventHelpers;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -25,7 +23,7 @@ namespace HTTPServer
         #endregion
 
         #region Classes
-        public class APIMethodAttributes : Attribute
+        public class ApiMethodAttributes : Attribute
         {
             public bool GetSupported { get; set; }
             public bool PostSupported { get; set; }
@@ -35,7 +33,8 @@ namespace HTTPServer
         }
         public class WebPagesAttributes : Attribute
         {
-            public bool IsWebPage { get { return true; } }
+            [SuppressMessage("ReSharper", "UnusedMember.Global")]
+            public bool IsWebPage => true;
         }
         #endregion
 
@@ -44,12 +43,12 @@ namespace HTTPServer
         #endregion
 
         #region Properties
-        public HTTPPrefixes<String> Prefixes { get; protected set; }
+        public HttpPrefixes<String> Prefixes { get; protected set; }
 
         private RunStatus _status = RunStatus.Stopped;
         public RunStatus Status
         {
-            get { return _status; }
+            get => _status;
             set
             {
                 if (_status != value)
@@ -60,41 +59,42 @@ namespace HTTPServer
             }
         }
 
-        private static string _StandardErrorResponseContent = Properties.Resources.ErrorResponseContentTemplate;
-        public static string StandardErrorResponseContent { get { return _StandardErrorResponseContent; }  }
+        public static string StandardErrorResponseContent => Properties.Resources.ErrorResponseContentTemplate;
 
         public NLog.Config.LoggingConfiguration LogConfig { get; protected set; }
         #endregion
 
         #region Locals
-        private HttpListener listener = new HttpListener();
-        private Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private HttpListener _listener = new HttpListener();
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         #endregion
 
         #region Constructors
         public Steward()
         {
-            this.LogConfig = new NLog.Config.LoggingConfiguration();
+            LogConfig = new NLog.Config.LoggingConfiguration();
             NLog.Targets.FileTarget logfile = new NLog.Targets.FileTarget() { FileName = Properties.Settings.Default.LogFile, Name = LogTarget , CreateDirs = true };
             NLog.Targets.ConsoleTarget logconsole = new NLog.Targets.ConsoleTarget() { Name = "logconsole" };
 
-            this.LogConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", LogLevel.Info, logfile));
-            this.LogConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", LogLevel.Debug, logconsole));
+            LogConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", LogLevel.Info, logfile));
+            LogConfig.LoggingRules.Add(new NLog.Config.LoggingRule("*", LogLevel.Debug, logconsole));
 
-            NLog.LogManager.Configuration = this.LogConfig;
+            LogManager.Configuration = LogConfig;
 
-            Prefixes = new HTTPPrefixes<string>();
-            Prefixes.OnAdd += new EventHandler<SingleStringEventArgs>(Prefixes_OnAdd);
-            Prefixes.OnAddRange += new EventHandler<MultiStringEventArgs>(Prefixes_OnAddRange);
-            Prefixes.OnRemove += new EventHandler<SingleStringEventArgs>(Prefixes_OnRemove);
-            Prefixes.OnRemoveRange += new EventHandler<MultiStringEventArgs>(Prefixes_OnRemoveRange);
+            Prefixes = new HttpPrefixes<string>();
+            Prefixes.OnAdd += Prefixes_OnAdd;
+            Prefixes.OnAddRange += Prefixes_OnAddRange;
+            Prefixes.OnRemove += Prefixes_OnRemove;
+            Prefixes.OnRemoveRange += Prefixes_OnRemoveRange;
         }
 
+        [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public Steward(string httpPrefix) : this()
         {
             Prefixes.Add(httpPrefix);
         }
 
+        [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public Steward(List<string> httpPrefixes) : this()
         {
             Prefixes.AddRange(httpPrefixes);
@@ -105,11 +105,11 @@ namespace HTTPServer
         private void Prefixes_OnAdd(object sender, SingleStringEventArgs e)
         {
             // No need to update the listener list unless the listener is running
-            if (this.Status == RunStatus.Running)
+            if (Status == RunStatus.Running)
             {
                 try
                 {
-                    listener.Prefixes.Add(e.Value);
+                    _listener.Prefixes.Add(e.Value);
                 }
                 catch
                 {
@@ -129,15 +129,15 @@ namespace HTTPServer
         private void Prefixes_OnRemove(object sender, SingleStringEventArgs e)
         {
             // No need to update the listener list unless the listener is running
-            if (this.Status == RunStatus.Running)
+            if (Status == RunStatus.Running)
             {
                 // If this is the last listener in the list, we need to stop the server.
-                if (listener.Prefixes.Count == 1
-                    && listener.Prefixes.Contains(e.Value))
+                if (_listener.Prefixes.Count == 1
+                    && _listener.Prefixes.Contains(e.Value))
                 {
                     Stop();
                 }
-                listener.Prefixes.Remove(e.Value);
+                _listener.Prefixes.Remove(e.Value);
             }
         }
         
@@ -153,36 +153,36 @@ namespace HTTPServer
         #region Start/Stop/Run
         public void Start()
         {
-            this.Status = RunStatus.Starting;
+            Status = RunStatus.Starting;
 
-            if (this.Prefixes.Count == 0)
+            if (Prefixes.Count == 0)
             {
                 throw new Exception("At least one http prefix must be specified to start the server.\r\n for example http://+:6464/api/v1/");
             }
 
-            listener = new HttpListener();
+            _listener = new HttpListener();
             // Add the prefixes.
-            foreach (string s in this.Prefixes)
+            foreach (string s in Prefixes)
             {
-                listener.Prefixes.Add(s);
+                _listener.Prefixes.Add(s);
             }
 
-            Thread thread = new Thread(new ThreadStart(Run));
+            Thread thread = new Thread(Run);
             thread.Start();
         }
 
         public void Run()
         { 
-            listener.Start();
-            this.Status = RunStatus.Running;
+            _listener.Start();
+            Status = RunStatus.Running;
             
-            while (listener.IsListening)
+            while (_listener.IsListening)
             {
-                IAsyncResult result = listener.BeginGetContext(Listen, listener);
+                IAsyncResult result = _listener.BeginGetContext(Listen, _listener);
                 result.AsyncWaitHandle.WaitOne();
             }
-            listener.Close();
-            this.Status = RunStatus.Stopped;
+            _listener.Close();
+            Status = RunStatus.Stopped;
         }
         
         private void Listen(IAsyncResult result)
@@ -212,86 +212,86 @@ namespace HTTPServer
 
         private void LogIncomingRequest(HttpListenerRequest req, string content = "")
         {
-            logger.Debug("######################################################################");
-            logger.Debug("##########                                                  ##########");
-            logger.Debug("##########                 START OF REQUEST                 ##########");
-            logger.Debug("##########                                                  ##########");
-            logger.Debug("######################################################################");
-            logger.Info($"Received Message: {req.HttpMethod} {req.Url} {req.ProtocolVersion}");
-            if (!logger.IsDebugEnabled)
+            _logger.Debug("######################################################################");
+            _logger.Debug("##########                                                  ##########");
+            _logger.Debug("##########                 START OF REQUEST                 ##########");
+            _logger.Debug("##########                                                  ##########");
+            _logger.Debug("######################################################################");
+            _logger.Info($"Received Message: {req.HttpMethod} {req.Url} {req.ProtocolVersion}");
+            if (!_logger.IsDebugEnabled)
             {
                 return;
             }
 
-            logger.Debug($"From: {req.UserAgent}");
-            logger.Debug($"User-Agent: {req.UserAgent}");
-            logger.Debug("______________________________________________________________________");
-            logger.Debug($"\t > Encoding: {req.ContentEncoding}");
-            logger.Debug($"\t > Content Type: {req.ContentType}");
-            logger.Debug($"\t > Server's Endpoint: {req.LocalEndPoint}");
-            logger.Debug($"\t > Client's Endpoint: {req.RemoteEndPoint}");
-            logger.Debug($"\t > Service Provider Name: {req.ServiceName}");
-            logger.Debug($"\t > User Host: {req.UserHostAddress} {((req.UserHostName == string.Empty) ? string.Empty :$" ({req.UserHostName})")}");
-            logger.Debug($"\t > User Language(s): { ((req.UserLanguages == null) ? "<NONE>" : String.Join(", ", req.UserLanguages)) }");
-            logger.Debug($"\t > Local Request: {req.IsLocal}");
-            logger.Debug($"\t > Web Socket Request: {req.IsWebSocketRequest}");
-            logger.Debug($"\t > Keep Alive Request: {req.KeepAlive}");
-            logger.Debug($"\t > Trace Identifier: {req.RequestTraceIdentifier}");
-            logger.Debug($"\t > URLs:");
-            logger.Debug($"\t\t - Raw URL: {req.RawUrl}");
-            logger.Debug($"\t\t - URL: {req.Url}");
-            logger.Debug($"\t\t - URL Referrer: {req.UrlReferrer}");
-            logger.Debug($"\t > Security: ");
-            logger.Debug($"\t\t - Is Authenticated: {req.IsAuthenticated}");
-            logger.Debug($"\t\t - Is Secured (SSL): {req.IsSecureConnection}");
-            logger.Debug($"\t\t - Has Certificate: {req.GetClientCertificate() == null}");
-            logger.Debug($"\t\t - Certificate Error Code: {((!req.IsAuthenticated || req.GetClientCertificate() == null) ? "N/A" : req.ClientCertificateError.ToString()) }");
+            _logger.Debug($"From: {req.UserAgent}");
+            _logger.Debug($"User-Agent: {req.UserAgent}");
+            _logger.Debug("______________________________________________________________________");
+            _logger.Debug($"\t > Encoding: {req.ContentEncoding}");
+            _logger.Debug($"\t > Content Type: {req.ContentType}");
+            _logger.Debug($"\t > Server's Endpoint: {req.LocalEndPoint}");
+            _logger.Debug($"\t > Client's Endpoint: {req.RemoteEndPoint}");
+            _logger.Debug($"\t > Service Provider Name: {req.ServiceName}");
+            _logger.Debug($"\t > User Host: {req.UserHostAddress} {((req.UserHostName == string.Empty) ? string.Empty :$" ({req.UserHostName})")}");
+            _logger.Debug($"\t > User Language(s): { ((req.UserLanguages == null) ? "<NONE>" : String.Join(", ", req.UserLanguages)) }");
+            _logger.Debug($"\t > Local Request: {req.IsLocal}");
+            _logger.Debug($"\t > Web Socket Request: {req.IsWebSocketRequest}");
+            _logger.Debug($"\t > Keep Alive Request: {req.KeepAlive}");
+            _logger.Debug($"\t > Trace Identifier: {req.RequestTraceIdentifier}");
+            _logger.Debug("\t > URLs:");
+            _logger.Debug($"\t\t - Raw URL: {req.RawUrl}");
+            _logger.Debug($"\t\t - URL: {req.Url}");
+            _logger.Debug($"\t\t - URL Referrer: {req.UrlReferrer}");
+            _logger.Debug("\t > Security: ");
+            _logger.Debug($"\t\t - Is Authenticated: {req.IsAuthenticated}");
+            _logger.Debug($"\t\t - Is Secured (SSL): {req.IsSecureConnection}");
+            _logger.Debug($"\t\t - Has Certificate: {req.GetClientCertificate() == null}");
+            _logger.Debug($"\t\t - Certificate Error Code: {((!req.IsAuthenticated || req.GetClientCertificate() == null) ? "N/A" : req.ClientCertificateError.ToString()) }");
 
-            logger.Debug($"\t > Cookies:");
+            _logger.Debug("\t > Cookies:");
             if (req.Cookies.Count == 0)
             {
-                logger.Debug($"\t\t - <NONE>");
+                _logger.Debug("\t\t - <NONE>");
             }
             foreach (Cookie c in req.Cookies)
             {
-                logger.Debug($"\t\t - {c.Name}");
-                logger.Debug($"\t\t\t * Value: {c.Value}");
-                logger.Debug($"\t\t\t * Domain: {c.Domain}");
-                logger.Debug($"\t\t\t * Path: {c.Path}");
-                logger.Debug($"\t\t\t * Port: {c.Port}");
-                logger.Debug($"\t\t\t * Secure: {c.Secure}");
-                logger.Debug($"\t\t\t * Issues On: {c.TimeStamp}");
-                logger.Debug($"\t\t\t * Expiration: {c.Expires} {((c.Expired) ? " (Expired)" : string.Empty)}");
-                logger.Debug($"\t\t\t * Don't Save: {c.Discard}");
-                logger.Debug($"\t\t\t * Comment: {c.Comment}");
-                logger.Debug($"\t\t\t * URI for Comments: {c.CommentUri}");
-                logger.Debug($"\t\t\t * Version: {((c.Version == 1) ? "2109" : "2965")}");
+                _logger.Debug($"\t\t - {c.Name}");
+                _logger.Debug($"\t\t\t * Value: {c.Value}");
+                _logger.Debug($"\t\t\t * Domain: {c.Domain}");
+                _logger.Debug($"\t\t\t * Path: {c.Path}");
+                _logger.Debug($"\t\t\t * Port: {c.Port}");
+                _logger.Debug($"\t\t\t * Secure: {c.Secure}");
+                _logger.Debug($"\t\t\t * Issues On: {c.TimeStamp}");
+                _logger.Debug($"\t\t\t * Expiration: {c.Expires} {((c.Expired) ? " (Expired)" : string.Empty)}");
+                _logger.Debug($"\t\t\t * Don't Save: {c.Discard}");
+                _logger.Debug($"\t\t\t * Comment: {c.Comment}");
+                _logger.Debug($"\t\t\t * URI for Comments: {c.CommentUri}");
+                _logger.Debug($"\t\t\t * Version: {((c.Version == 1) ? "2109" : "2965")}");
             }
 
-            logger.Debug($"\t > Headers:");
+            _logger.Debug("\t > Headers:");
             if (req.Headers.Count == 0)
             {
-                logger.Debug($"\t\t - <NONE>");
+                _logger.Debug("\t\t - <NONE>");
             }
             foreach (string key in req.Headers.AllKeys)
             {
                 string[] values = req.Headers.GetValues(key);
-                logger.Debug($"\t\t - {key}: {((values.Length == 0) ? "<NONE>" : String.Join(", ", values))}");
+                _logger.Debug($"\t\t - {key}: {(values == null || values.Length == 0 ? "<NONE>" : String.Join(", ", values))}");
             }
 
-            logger.Debug($"\t > Body:");
-            logger.Debug($"\t\t - Has Content: {req.HasEntityBody}");
-            logger.Debug($"\t\t - Content Length: {((!req.HasEntityBody) ? "N/A" : req.ContentLength64.ToString())}");
-            logger.Debug($"\t\t - Content: {content}");
-            logger.Debug($"\t > Query String: {req.QueryString}");
-            logger.Debug("######################################################################");
-            logger.Debug("##########                  END OF REQUEST                  ##########");
-            logger.Debug("######################################################################");
+            _logger.Debug("\t > Body:");
+            _logger.Debug($"\t\t - Has Content: {req.HasEntityBody}");
+            _logger.Debug($"\t\t - Content Length: {((!req.HasEntityBody) ? "N/A" : req.ContentLength64.ToString())}");
+            _logger.Debug($"\t\t - Content: {content}");
+            _logger.Debug($"\t > Query String: {req.QueryString}");
+            _logger.Debug("######################################################################");
+            _logger.Debug("##########                  END OF REQUEST                  ##########");
+            _logger.Debug("######################################################################");
         }
 
         private ResponseInfo Handle(ResolvedHttpListenerRequest request)
         {
-            ResponseInfo result = new ResponseInfo(HttpStatusCode.NotFound, _StandardErrorResponseContent);
+            ResponseInfo result = new ResponseInfo(HttpStatusCode.NotFound, StandardErrorResponseContent);
 
             if (request.Request.Url.Segments.Length < 2)
             {
@@ -299,43 +299,37 @@ namespace HTTPServer
             }
 
             string pathElement = request.Request.Url.Segments[1].Replace("/", string.Empty);
-            string nameSpaceName = string.Format("{0}.{1}", GetType().Namespace, pathElement);
+            string nameSpaceName = $"{GetType().Namespace}.{pathElement}";
 
-            System.Type nameSpace = (from type in Assembly.GetExecutingAssembly().GetTypes()
+            Type nameSpace = (from type in Assembly.GetExecutingAssembly().GetTypes()
                                      where type.Namespace == nameSpaceName
-                                     select type).FirstOrDefault<Type>();
+                                     select type).FirstOrDefault();
 
             if (nameSpace != null)
             {
                 MethodInfo subElementHandler = nameSpace.GetMethod(HANDLERNAME);
-                result = (ResponseInfo)subElementHandler.Invoke(this, new object[] { request });
+                if (subElementHandler != null)
+                {
+                    result = (ResponseInfo)subElementHandler.Invoke(this, new object[] {request});
+                }
             }
             else
             {
                 // See if we have a method to call
-                throw new InvalidOperationException("Valid type not found.");
+                MethodInfo method = typeof(Steward).GetMethod(pathElement);
+                if (method != null)
+                {
+                    result = (ResponseInfo)method.Invoke(typeof(Steward), new object[] { request });
+                }
             }
 
             return result;
         }
-        
-        private void RunServerCallback(IAsyncResult ar)
-        {
-            try
-            {
-                Action target = (Action)ar.AsyncState;
-                target.EndInvoke(ar);
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "Failed to initialize Server");
-            }
-        }
 
         public void Stop()
         {
-            this.Status = RunStatus.Stopping;
-            listener.Stop();
+            Status = RunStatus.Stopping;
+            _listener.Stop();
         }
         #endregion
 

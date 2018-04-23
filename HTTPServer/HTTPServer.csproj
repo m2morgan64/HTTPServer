@@ -104,5 +104,11 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\VolumeControllerHTML.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\VolumeController\AudioManager.csproj">
+      <Project>{8183b08e-8ecf-42aa-925a-04f037e81975}</Project>
+      <Name>AudioManager</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

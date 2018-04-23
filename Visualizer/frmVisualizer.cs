@@ -1,38 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Threading;
 using NLog;
+using Visualizer.Properties;
 
 namespace Visualizer
 {
-    public partial class frmVisualizer : Form
+    public partial class FrmVisualizer : Form
     {
-        private HTTPServer.Steward server = new HTTPServer.Steward();
-        private Logger logger = NLog.LogManager.GetCurrentClassLogger();
+        private readonly HTTPServer.Steward _server = new HTTPServer.Steward();
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-        public frmVisualizer()
+        public FrmVisualizer()
         {
-            NLog.LogManager.Configuration = server.LogConfig;
+            LogManager.Configuration = _server.LogConfig;
             InitializeComponent();
-            server.OnStatusChange += new EventHandler<EventArgs>(this.Server_StatusChange);
+            _server.OnStatusChange += Server_StatusChange;
         }
 
         private void frmVisualizer_Load(object sender, EventArgs e)
         {
-            lblURI.Text = Properties.Settings.Default.URI;
+            lblURI.Text = Settings.Default.URI;
             StartStop();
         }
 
         private void frmVisualizer_Closing(object sender, FormClosingEventArgs e)
         {
-            server.Stop();
+            _server.Stop();
         }
 
         private void cmdStartStop_Click(object sender, EventArgs e)
@@ -45,46 +38,44 @@ namespace Visualizer
             SetServerStatus();
         }
 
-        delegate void SetServerStatusCallback();
+        private delegate void SetServerStatusCallback();
         private void SetServerStatus()
         {
-            if (this.Disposing || this.IsDisposed)
+            if (Disposing || IsDisposed)
             {
                 return;
             }
 
-            if (this.InvokeRequired)
+            if (InvokeRequired)
             {
                 try
                 {
-                    SetServerStatusCallback d = new SetServerStatusCallback(SetServerStatus);
-                    this.Invoke(d);
+                    SetServerStatusCallback d = SetServerStatus;
+                    Invoke(d);
                 }
                 catch (Exception ex)
                 {
-                    logger.Error(ex, "An exception occurred while attempting to set the server status.");
+                    _logger.Error(ex, "An exception occurred while attempting to set the server status.");
                 }
             }
             else
             {
-                switch (server.Status)
+                switch (_server.Status)
                 {
                     case HTTPServer.Steward.RunStatus.Stopped:
-                        cmdStartStop.Image = Properties.Resources.Play;
+                        cmdStartStop.Image = Resources.Play;
                         cmdStartStop.Enabled = true;
-                        lblStatus.Image = Properties.Resources.Dot_Grey;
+                        lblStatus.Image = Resources.Dot_Grey;
                         break;
                     case HTTPServer.Steward.RunStatus.Running:
-                        cmdStartStop.Image = Properties.Resources.Stop;
+                        cmdStartStop.Image = Resources.Stop;
                         cmdStartStop.Enabled = true;
-                        lblStatus.Image = Properties.Resources.Dot_Green;
+                        lblStatus.Image = Resources.Dot_Green;
                         break;
                     case HTTPServer.Steward.RunStatus.Starting:
                     case HTTPServer.Steward.RunStatus.Stopping:
                         cmdStartStop.Enabled = false;
-                        lblStatus.Image = Properties.Resources.Dot_Purple;
-                        break;
-                    default:
+                        lblStatus.Image = Resources.Dot_Purple;
                         break;
                 }
             }
@@ -92,26 +83,23 @@ namespace Visualizer
 
         private void StartStop()
         {
-            switch (server.Status)
+            switch (_server.Status)
             {
                 case HTTPServer.Steward.RunStatus.Running:
-                    logger.Info("Stopping the Server.");
-                    server.Stop();
+                    _logger.Info("Stopping the Server.");
+                    _server.Stop();
                     break;
                 case HTTPServer.Steward.RunStatus.Stopped:
-                    logger.Info("Starting the Server.");
-                    server.Prefixes.Add(Properties.Settings.Default.URI);
-                    server.Start();
-                    break;
-                default:
-                    // If it's in a transition state, then we don't want to job it's elbow.
+                    _logger.Info("Starting the Server.");
+                    _server.Prefixes.Add(Settings.Default.URI);
+                    _server.Start();
                     break;
             }
         }
 
         private void cmdCopy_Click(object sender, EventArgs e)
         {
-            Clipboard.SetText(Properties.Settings.Default.URI);
+            Clipboard.SetText(Settings.Default.URI);
         }
     }
 }

@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace Visualizer
 {
-    partial class frmVisualizer
+    partial class FrmVisualizer
     {
         /// <summary>
         /// Required designer variable.
@@ -32,7 +32,7 @@ namespace Visualizer
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmVisualizer));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmVisualizer));
             this.tt = new System.Windows.Forms.ToolTip(this.components);
             this.tsMain = new System.Windows.Forms.ToolStrip();
             this.cmdStartStop = new System.Windows.Forms.ToolStripButton();
@@ -170,7 +170,7 @@ namespace Visualizer
             this.Controls.Add(this.pnlMain);
             this.Controls.Add(this.ssMain);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "frmVisualizer";
+            this.Name = "FrmVisualizer";
             this.Text = "HTTP Server Visualizer";
             this.Load += new System.EventHandler(this.frmVisualizer_Load);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.frmVisualizer_Closing);

@@ -2,13 +2,22 @@
 using System.Linq;
 using HTTPServer.lib;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
+using VolumeController;
+using Newtonsoft.Json;
+using static VolumeController.VolumeManager;
 
 namespace HTTPServer.api.VolumeController
 {
     public static class VolumeController
     {
+        #region Locals
+        private static readonly VolumeManager VolMgr = new VolumeManager();
+        #endregion
+
         #region Handler
+        // ReSharper disable once UnusedMember.Global
         public static ResponseInfo Handle(ResolvedHttpListenerRequest request)
         {
             ResponseInfo result = new ResponseInfo(HttpStatusCode.NotFound, Steward.StandardErrorResponseContent);
@@ -29,25 +38,31 @@ namespace HTTPServer.api.VolumeController
 
             if (pathElement == string.Empty)
             {
-                return new ResponseInfo(HttpStatusCode.OK, lib.Utils.PageBuilder.MethodListInAPI(typeof(VolumeController)));
+                return new ResponseInfo(HttpStatusCode.OK, lib.Utils.PageBuilder.MethodListInApi(typeof(VolumeController)));
             }
 
-            string nameSpaceName = string.Format("{0}.{1}", typeof(VolumeController).Namespace, pathElement);
+            string nameSpaceName = $"{typeof(VolumeController).Namespace}.{pathElement}";
 
-            System.Type nameSpace = (from type in Assembly.GetExecutingAssembly().GetTypes()
+            Type nameSpace = (from type in Assembly.GetExecutingAssembly().GetTypes()
                                      where type.Namespace == nameSpaceName
-                                     select type).FirstOrDefault<Type>();
+                                     select type).FirstOrDefault();
 
             if (nameSpace != null)
             {
                 MethodInfo subElementHandler = nameSpace.GetMethod(Steward.HANDLERNAME);
-                result = (ResponseInfo)subElementHandler.Invoke(typeof(VolumeController), new object[] { request });
+                if (subElementHandler != null)
+                {
+                    result = (ResponseInfo)subElementHandler.Invoke(typeof(VolumeController), new object[] {request});
+                }
             }
             else
             {
                 // See if we have a method to call
                 MethodInfo method = typeof(VolumeController).GetMethod(pathElement);
-                result = (ResponseInfo)method.Invoke(typeof(VolumeController), new object[] { request });
+                if (method != null)
+                {
+                    result = (ResponseInfo)method.Invoke(typeof(VolumeController), new object[] { request });
+                }
             }
 
             return result;
@@ -55,22 +70,62 @@ namespace HTTPServer.api.VolumeController
         #endregion
 
         #region Public API Methods
-        [Steward.APIMethodAttributes(GetSupported = true, PutSupported = false, PostSupported = false, DeleteSupported = false, Description = "The current sound volume of the server")]
-        public static ResponseInfo CurrentVolume(ResolvedHttpListenerRequest request)
+        [Steward.ApiMethodAttributes(GetSupported = true, PutSupported = false, PostSupported = true, DeleteSupported = false, Description = "The current sound volume of the server")]
+        // ReSharper disable once UnusedMember.Global
+        public static ResponseInfo Volume(ResolvedHttpListenerRequest request)
         {
-            ResponseInfo result = new ResponseInfo(HttpStatusCode.OK, "42");
+            ResponseInfo result;
+            HttpMethod method = new HttpMethod(request.Request.HttpMethod);
+
+            if (method == HttpMethod.Get)
+            {
+                result = Volume_Get();
+            }
+            else if (method == HttpMethod.Post)
+            {
+                result = Volume_Post(request);
+            }
+            else
+            {
+                result = new ResponseInfo(HttpStatusCode.MethodNotAllowed, "Invalid Method");
+            }
 
             return result;
         }
-        #endregion
-        
-        #region Pages
-        [Steward.WebPagesAttributes()]
-        public static ResponseInfo UI(ResolvedHttpListenerRequest request)
+
+        private static ResponseInfo Volume_Get()
         {
-            return new ResponseInfo(HttpStatusCode.OK, HTTPServer.Properties.Resources.VolumeControllerHTML);
+            return new ResponseInfo(HttpStatusCode.OK, JsonConvert.SerializeObject(VolMgr.GetVolumeSettings()));
         }
 
+        private static ResponseInfo Volume_Post(ResolvedHttpListenerRequest request)
+        {
+            VolumeSettings newSettings;
+
+            switch (request.ContentType)
+            {
+                case "application/json":
+                    newSettings = JsonConvert.DeserializeObject<VolumeSettings>(request.Content);
+                    break;
+                default:
+                    return new ResponseInfo(HttpStatusCode.InternalServerError,
+                                            "Unable to parse request body; expecting json object.");
+            }
+
+            VolMgr.SetVolume(newSettings);
+
+            return new ResponseInfo(HttpStatusCode.OK, JsonConvert.SerializeObject(VolMgr.GetVolumeSettings()));
+        }
+        #endregion
+
+        #region Pages
+        [Steward.WebPagesAttributes()]
+        // ReSharper disable once InconsistentNaming
+        // ReSharper disable once UnusedMember.Global
+        public static ResponseInfo UI(ResolvedHttpListenerRequest request)
+        {
+            return new ResponseInfo(HttpStatusCode.OK, Properties.Resources.VolumeControllerHTML);
+        }
         #endregion
 
         #region Helpers

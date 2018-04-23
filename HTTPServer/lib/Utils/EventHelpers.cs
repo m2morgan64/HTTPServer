@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 
 namespace HTTPServer.lib.Utils
 {
@@ -10,37 +8,26 @@ namespace HTTPServer.lib.Utils
     {
         public static void RaiseSimpleEvent(object obj, EventHandler<EventArgs> evt)
         {
-            if (evt != null)
-            {
-                evt(obj, new EventArgs());
-            }
+            evt?.Invoke(obj, new EventArgs());
         }
 
         public static void RaiseSingleStringEvent(object obj, EventHandler<SingleStringEventArgs> evt, string val)
         {
-            if (evt != null)
-            {
-                evt(obj, new SingleStringEventArgs(val));
-            }
+            evt?.Invoke(obj, new SingleStringEventArgs(val));
         }
 
         public static void RaiseMultiStringEvent(object obj, EventHandler<MultiStringEventArgs> evt, List<string> vals)
         {
-            if (evt != null)
-            {
-                evt(obj, new MultiStringEventArgs(vals));
-            }
+            evt?.Invoke(obj, new MultiStringEventArgs(vals));
         }
 
+        [SuppressMessage("ReSharper", "UnusedMember.Global")]
         public static void RaiseMultiStringEvent(object obj, EventHandler<MultiStringEventArgs> evt, params string[] vals)
         {
-            if (evt != null)
-            {
-                evt(obj, new MultiStringEventArgs(vals));
-            }
+            evt?.Invoke(obj, new MultiStringEventArgs(vals));
         }
 
-        public class SingleStringEventArgs : System.EventArgs
+        public class SingleStringEventArgs : EventArgs
         {
             public string Value { get; protected set; }
             public SingleStringEventArgs(string val)
@@ -49,7 +36,7 @@ namespace HTTPServer.lib.Utils
             }
         }
 
-        public class MultiStringEventArgs : System.EventArgs
+        public class MultiStringEventArgs : EventArgs
         {
             public List<string> Values { get; protected set; }
             public MultiStringEventArgs(List<string> vals)
